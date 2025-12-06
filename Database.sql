@@ -260,3 +260,56 @@ CREATE TABLE CTHDDV
 
         PRIMARY KEY(MAHD, MATC, MADV)
 )
+
+use PETCARX
+go
+
+select * from CHINHANH
+go
+select * from NHANSU
+go
+select * from LICHSUCONGTAC
+go
+select * from DOANHTHUCHINHANH
+go
+select * from SANPHAM
+go
+select * from SANPHAM_CHINHANH
+go
+select * from DICHVU
+go
+select * from DICHVU_CHINHANH
+go
+select * from CAPBACTHANHVIEN
+go
+select * from TAIKHOANHOIVIEN
+go
+select * from DANHGIA
+go
+select * from THUCUNG
+go
+select * from KHUYENMAI
+go
+select * from GOITIEM
+go
+select * from CHITIETGOITIEM
+go
+select * from GOITIEM_CHINHANH
+go
+select * from HOSOKHAMBENH
+go
+select * from DANGKYGOITIEM
+go
+select * from HOSOTIEMPHONG
+go
+select * from HOSOTRIEUCHUNG
+go
+select * from HOSOCHUANDOAN
+go
+select * from CHITIETTOATHUOC
+go
+select * from HOADON
+go
+select * from CTHDSANPHAM
+go
+select * from CTHDDV
