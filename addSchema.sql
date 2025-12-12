@@ -20,7 +20,8 @@ CREATE TYPE TVP_Thuoc AS TABLE
     SOLUONG INT
 )
 GO
---1
+
+----1. Trừ tồn kho khi thêm chi tiết toa thuốc----
 CREATE TRIGGER trg_TruKhoThuoc
 ON CHITIETTOATHUOC
 AFTER INSERT
@@ -55,7 +56,8 @@ BEGIN
     WHERE MASP = @MASP AND MACN = @MACN
 END
 GO
---2
+
+----2. Thêm hồ sơ khám bệnh----
 CREATE PROCEDURE sp_KhamBenh_ToanDien
     @MAKB INT,
     @MATC INT,
@@ -98,7 +100,7 @@ BEGIN
 END
 GO
 
---Kịch bản 7 Tra cứu Lịch sử Khám bệnh & Vắc-xin
+----Kịch bản 7 Tra cứu Lịch sử Khám bệnh & Vắc-xin----
 CREATE INDEX idx_HoSoKham_MATC_NGAY
 ON HOSOKHAMBENH(MATC)
 GO
@@ -106,7 +108,7 @@ GO
 CREATE INDEX idx_HoSoTiem_MATC_NGAY
 ON HOSOTIEMPHONG (MATC, NGAYTIEM)
 GO
---3
+----3. Tra cứu lịch sử khám bệnh và tiêm phòng của thú cưng----
 CREATE PROCEDURE sp_LichSuThuCung
     @MATC INT
 AS
@@ -118,8 +120,8 @@ BEGIN
     WHERE kb.MATC = @MATC
 END
 GO
---4
---Kịch bản 8 Báo cáo Doanh thu & Hiệu suất Chi nhánh
+
+----4. Báo cáo doanh thu chi nhánh mỗi tháng theo năm----
 CREATE PROCEDURE sp_BaoCaoDoanhThu
     @NAM INT
 AS
@@ -132,8 +134,8 @@ BEGIN
     GROUP BY MACN, MONTH(NGAY)
 END
 GO
---5
---Kịch bản 6 Tích điểm & Tự động Thăng hạng
+
+----5. Tích điểm & Tự động Thăng hạng khi thêm hóa đơn----
 CREATE OR ALTER TRIGGER trg_TichDiem_NangHang
 ON HOADON
 AFTER INSERT
@@ -168,12 +170,12 @@ BEGIN
         FROM CAPBACTHANHVIEN
         WHERE CHITIEUDAT <= tk.SOTIENDATIEU
         )
-
 -- Nếu chưa đủ điều kiện của bất kỳ cấp nào,
 -- MACAPBAC sẽ giữ nguyên giá trị cũ
 END
 GO
---6
+
+----6. Thêm doanh thu chi nhánh cuối ngày----
 CREATE PROCEDURE ADD_DOANHTHUCHINHANH
 AS
 BEGIN
