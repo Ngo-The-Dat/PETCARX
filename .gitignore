@@ -1,2 +1,6 @@
 .venv
 .env
+venv/
+__pycache__/
+*.pyc
+web_app/db/connection.py
