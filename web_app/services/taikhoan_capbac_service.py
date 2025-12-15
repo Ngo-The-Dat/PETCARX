@@ -1,12 +1,12 @@
 from db.connection import get_connection
 import pandas as pd
 
-def danhsach_taikhoan_capdo(macapdo):
+def danhsach_taikhoan_capbac(macapbac):
     with get_connection() as conn:
         cursor = conn.cursor()
         cursor.execute(
-            "EXEC TAIKHOAN_CAPBAC ?",
-            (macapdo)
+            "EXEC TAIKHOANHOIVIEN_CAPBAC ?",
+            (macapbac)
         )
         rows = cursor.fetchall()
         if not rows:
