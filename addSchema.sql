@@ -30,23 +30,38 @@ ADD FILEGROUP DOANHTHU_B2020
 ALTER DATABASE PETCARX
 ADD FILEGROUP DOANHTHU_A2022
 GO
+
+DECLARE @DataPath NVARCHAR(260);
+
+SELECT @DataPath = CAST(SERVERPROPERTY('InstanceDefaultDataPath') AS NVARCHAR(260));
+
+EXEC('
 ALTER DATABASE PETCARX ADD FILE
 (
-	NAME = DOANHTHU_B2020,
-	FILENAME = 'C:\Program Files\Microsoft SQL Server\MSSQL16.SQLEXPRESS\MSSQL\DATA\DOANHTHU_B2020.ndf',
-	SIZE = 10 MB,
-	MAXSIZE = UNLIMITED,
-	FILEGROWTH = 1024 KB
+    NAME = DOANHTHU_B2020,
+    FILENAME = ''' + @DataPath + 'DOANHTHU_B2020.ndf'',
+    SIZE = 10MB,
+    MAXSIZE = UNLIMITED,
+    FILEGROWTH = 1024KB
 ) TO FILEGROUP DOANHTHU_B2020
+');
+GO
 
+DECLARE @DataPath NVARCHAR(260);
+
+SELECT @DataPath = CAST(SERVERPROPERTY('InstanceDefaultDataPath') AS NVARCHAR(260));
+
+EXEC('
 ALTER DATABASE PETCARX ADD FILE
 (
 	NAME = DOANHTHU_A2022,
-	FILENAME = 'C:\Program Files\Microsoft SQL Server\MSSQL16.SQLEXPRESS\MSSQL\DATA\DOANHTHU_A2022.ndf',
+	FILENAME = ''' + @DataPath + 'DOANHTHU_A2022.ndf'',
 	SIZE = 10 MB,
 	MAXSIZE = UNLIMITED,
 	FILEGROWTH = 1024 KB
 ) TO FILEGROUP DOANHTHU_A2022
+');
+
 GO
 CREATE PARTITION FUNCTION DOANHTHU_BY_YEAR_FUNCTION(DATE)
 AS RANGE LEFT
@@ -137,26 +152,50 @@ GO
 
 ----2. Thêm hồ sơ khám bệnh----
 CREATE PROCEDURE sp_KhamBenh_ToanDien
-    @MAKB INT,
     @MATC INT,
     @MABACSI INT,
     @NGAYTAIKHAM DATE
 AS
 BEGIN
+    SET NOCOUNT ON;
     SET XACT_ABORT ON;
+
+    DECLARE @MAKB INT;
+
     BEGIN TRAN;
 
+    ----------------------------------------------------------------
+    -- 1. SINH MAKB = MAX + 1 (CÓ KHÓA)
+    ----------------------------------------------------------------
+    SELECT @MAKB = ISNULL(MAX(MAKB), 0) + 1
+    FROM HOSOKHAMBENH WITH (UPDLOCK, HOLDLOCK);
+
+    ----------------------------------------------------------------
+    -- 2. INSERT HỒ SƠ KHÁM
+    ----------------------------------------------------------------
     INSERT INTO HOSOKHAMBENH (MAKB, MATC, MABACSI, NGAYHENTAIKHAM)
     VALUES (@MAKB, @MATC, @MABACSI, @NGAYTAIKHAM);
 
+    ----------------------------------------------------------------
+    -- 3. TRIỆU CHỨNG
+    ----------------------------------------------------------------
     INSERT INTO HOSOTRIEUCHUNG (MAKB, TRIEUCHUNG)
-    SELECT @MAKB, TRIEUCHUNG FROM #DS_TRIEUCHUNG;
+    SELECT @MAKB, TRIEUCHUNG
+    FROM #DS_TRIEUCHUNG;
 
+    ----------------------------------------------------------------
+    -- 4. CHẨN ĐOÁN
+    ----------------------------------------------------------------
     INSERT INTO HOSOCHUANDOAN (MAKB, CHUANDOAN)
-    SELECT @MAKB, CHUANDOAN FROM #DS_CHUANDOAN;
+    SELECT @MAKB, CHUANDOAN
+    FROM #DS_CHUANDOAN;
 
+    ----------------------------------------------------------------
+    -- 5. TOA THUỐC (TRIGGER TỰ TRỪ KHO)
+    ----------------------------------------------------------------
     INSERT INTO CHITIETTOATHUOC (MAKB, MASP, SOLUONG)
-    SELECT @MAKB, MASP, SOLUONG FROM #DS_THUOC;
+    SELECT @MAKB, MASP, SOLUONG
+    FROM #DS_THUOC;
 
     COMMIT;
 END

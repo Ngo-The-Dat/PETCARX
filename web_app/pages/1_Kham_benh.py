@@ -1,7 +1,5 @@
 import streamlit as st
-import pandas as pd
 from services.khambenh_service import kham_benh_toan_dien
-from models.tvp import tvp_trieu_chung, tvp_chuan_doan, tvp_thuoc
 
 st.set_page_config(layout="wide")
 st.title("🩺 Khám bệnh & Kê đơn toàn diện")
@@ -11,18 +9,15 @@ st.title("🩺 Khám bệnh & Kê đơn toàn diện")
 # =========================
 st.subheader("Thông tin hồ sơ khám")
 
-col1, col2, col3, col4 = st.columns(4)
+col1, col2, col3 = st.columns(3)
 
 with col1:
-    makb = st.number_input("Mã khám bệnh (MAKB)", min_value=1, step=1)
-
-with col2:
     matc = st.number_input("Mã thú cưng (MATC)", min_value=1, step=1)
 
-with col3:
+with col2:
     mabacsi = st.number_input("Mã bác sĩ (MABACSI)", min_value=1, step=1)
 
-with col4:
+with col3:
     ngay_tai_kham = st.date_input("Ngày hẹn tái khám")
 
 st.divider()
@@ -106,7 +101,7 @@ if st.button("💾 Lưu hồ sơ khám", type="primary"):
         ds_trieuchung = [x for x in st.session_state.trieuchung if x.strip()]
         ds_chuandoan = [x for x in st.session_state.chuandoan if x.strip()]
         ds_thuoc = [
-            (x["MASP"], x["SOLUONG"])
+            (int(x["MASP"]), int(x["SOLUONG"]))
             for x in st.session_state.thuoc
             if x["MASP"] is not None
         ]
@@ -115,14 +110,16 @@ if st.button("💾 Lưu hồ sơ khám", type="primary"):
             st.warning("⚠️ Vui lòng nhập đầy đủ triệu chứng, chẩn đoán và thuốc")
             st.stop()
 
+        # =========================
+        # DATA ĐỒNG BỘ SERVICE
+        # =========================
         data = {
-            "makb": makb,
-            "matc": matc,
-            "mabacsi": mabacsi,
+            "matc": int(matc),
+            "mabacsi": int(mabacsi),
             "ngaytaikham": ngay_tai_kham,
-            "tvp_trieuchung": tvp_trieu_chung(ds_trieuchung),
-            "tvp_chuandoan": tvp_chuan_doan(ds_chuandoan),
-            "tvp_thuoc": tvp_thuoc(ds_thuoc)
+            "trieuchung": ds_trieuchung,
+            "chuandoan": ds_chuandoan,
+            "thuoc": ds_thuoc
         }
 
         kham_benh_toan_dien(data)
