@@ -1,12 +1,16 @@
-import sqlalchemy
+from sqlalchemy import create_engine, text
 import streamlit as st
 import pandas as pd
 from os import getenv
 from dotenv import load_dotenv
 
 load_dotenv()
-engine = sqlalchemy.create_engine(getenv('SQL_CONNECTION_STRING'))
+engine = create_engine(getenv("SQL_CONNECTION_STRING"))
 connetion = engine.connect()
+# 2. Truy vấn dữ liệu cho báo cáo
+st.title("Báo cáo Doanh thu Chi nhánh")
+nam_selected = st.number_input("Chọn năm", value=2021)
+
 
 select_query = """
 SELECT *
@@ -21,5 +25,4 @@ df = pd.read_sql(select_query, connetion)
 df = pd.DataFrame.drop_duplicates(df)
 df = df.loc[:,~df.columns.duplicated()]
 
-df.to_csv('test.csv')
 st.dataframe(df)
