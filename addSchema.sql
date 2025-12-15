@@ -30,23 +30,38 @@ ADD FILEGROUP DOANHTHU_B2020
 ALTER DATABASE PETCARX
 ADD FILEGROUP DOANHTHU_A2022
 GO
+
+DECLARE @DataPath NVARCHAR(260);
+
+SELECT @DataPath = CAST(SERVERPROPERTY('InstanceDefaultDataPath') AS NVARCHAR(260));
+
+EXEC('
 ALTER DATABASE PETCARX ADD FILE
 (
-	NAME = DOANHTHU_B2020,
-	FILENAME = 'C:\Program Files\Microsoft SQL Server\MSSQL16.MSSQLSERVER\MSSQL\DATA\DOANHTHU_B2020.ndf',
-	SIZE = 10 MB,
-	MAXSIZE = UNLIMITED,
-	FILEGROWTH = 1024 KB
+    NAME = DOANHTHU_B2020,
+    FILENAME = ''' + @DataPath + 'DOANHTHU_B2020.ndf'',
+    SIZE = 10MB,
+    MAXSIZE = UNLIMITED,
+    FILEGROWTH = 1024KB
 ) TO FILEGROUP DOANHTHU_B2020
+');
+GO
 
+DECLARE @DataPath NVARCHAR(260);
+
+SELECT @DataPath = CAST(SERVERPROPERTY('InstanceDefaultDataPath') AS NVARCHAR(260));
+
+EXEC('
 ALTER DATABASE PETCARX ADD FILE
 (
 	NAME = DOANHTHU_A2022,
-	FILENAME = 'C:\Program Files\Microsoft SQL Server\MSSQL16.MSSQLSERVER\MSSQL\DATA\DOANHTHU_A2022.ndf',
+	FILENAME = ''' + @DataPath + 'DOANHTHU_A2022.ndf'',
 	SIZE = 10 MB,
 	MAXSIZE = UNLIMITED,
 	FILEGROWTH = 1024 KB
-) TO FILEGROUP DOANHTHU_A2022   
+) TO FILEGROUP DOANHTHU_A2022
+');
+
 GO
 CREATE PARTITION FUNCTION DOANHTHU_BY_YEAR_FUNCTION(DATE)
 AS RANGE LEFT
@@ -157,44 +172,52 @@ GO
 
 ----2. Thêm hồ sơ khám bệnh----
 CREATE PROCEDURE sp_KhamBenh_ToanDien
-    @MAKB INT,
     @MATC INT,
     @MABACSI INT,
-    @NGAYTAIKHAM DATE,
-
-    @DS_TRIEUCHUNG TVP_TrieuChung READONLY,
-    @DS_CHUANDOAN TVP_ChuanDoan READONLY,
-    @DS_THUOC TVP_Thuoc READONLY
+    @NGAYTAIKHAM DATE
 AS
 BEGIN
-    SET XACT_ABORT ON
-    BEGIN TRAN
+    SET NOCOUNT ON;
+    SET XACT_ABORT ON;
 
-    -- 1. MASTER
-    INSERT INTO HOSOKHAMBENH
-        (MAKB, MATC, MABACSI, NGAYHENTAIKHAM)
-    VALUES
-        (@MAKB, @MATC, @MABACSI, @NGAYTAIKHAM)
+    DECLARE @MAKB INT;
 
-    -- 2. NHIỀU TRIỆU CHỨNG
-    INSERT INTO HOSOTRIEUCHUNG
-        (MAKB, TRIEUCHUNG)
+    BEGIN TRAN;
+
+    ----------------------------------------------------------------
+    -- 1. SINH MAKB = MAX + 1 (CÓ KHÓA)
+    ----------------------------------------------------------------
+    SELECT @MAKB = ISNULL(MAX(MAKB), 0) + 1
+    FROM HOSOKHAMBENH WITH (UPDLOCK, HOLDLOCK);
+
+    ----------------------------------------------------------------
+    -- 2. INSERT HỒ SƠ KHÁM
+    ----------------------------------------------------------------
+    INSERT INTO HOSOKHAMBENH (MAKB, MATC, MABACSI, NGAYHENTAIKHAM)
+    VALUES (@MAKB, @MATC, @MABACSI, @NGAYTAIKHAM);
+
+    ----------------------------------------------------------------
+    -- 3. TRIỆU CHỨNG
+    ----------------------------------------------------------------
+    INSERT INTO HOSOTRIEUCHUNG (MAKB, TRIEUCHUNG)
     SELECT @MAKB, TRIEUCHUNG
-    FROM @DS_TRIEUCHUNG
+    FROM #DS_TRIEUCHUNG;
 
-    -- 3. NHIỀU CHẨN ĐOÁN
-    INSERT INTO HOSOCHUANDOAN
-        (MAKB, CHUANDOAN)
+    ----------------------------------------------------------------
+    -- 4. CHẨN ĐOÁN
+    ----------------------------------------------------------------
+    INSERT INTO HOSOCHUANDOAN (MAKB, CHUANDOAN)
     SELECT @MAKB, CHUANDOAN
-    FROM @DS_CHUANDOAN
+    FROM #DS_CHUANDOAN;
 
-    -- 4. NHIỀU THUỐC (TRIGGER TỰ KIỂM KHO)
-    INSERT INTO CHITIETTOATHUOC
-        (MAKB, MASP, SOLUONG)
+    ----------------------------------------------------------------
+    -- 5. TOA THUỐC (TRIGGER TỰ TRỪ KHO)
+    ----------------------------------------------------------------
+    INSERT INTO CHITIETTOATHUOC (MAKB, MASP, SOLUONG)
     SELECT @MAKB, MASP, SOLUONG
-    FROM @DS_THUOC
+    FROM #DS_THUOC;
 
-    COMMIT
+    COMMIT;
 END
 GO
 
@@ -297,13 +320,3 @@ BEGIN
     WHERE SDT = @SDT
 END
 GO
-
-----8. Danh sách các thành viên thuộc 1 cấp bậc nào đó----
-CREATE PROC TAIKHOAN_CAPBAC @MACAPBAC INT
-AS
-BEGIN
-    SELECT *
-    FROM TAIKHOANHOIVIEN TK
-    JOIN CAPBACTHANHVIEN CB ON TK.MACAPBAC = CB.MACAPBAC
-    WHERE CB.MACAPBAC = @MACAPBAC
-END
