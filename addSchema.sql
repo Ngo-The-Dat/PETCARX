@@ -277,3 +277,136 @@ BEGIN
     WHERE SDT = @SDT
 END
 GO
+
+----9. Tạo và cập nhập hoá đơn----
+CREATE OR ALTER PROCEDURE sp_CreateInvoice
+    @MATK INT,
+    @MACN INT
+AS
+BEGIN
+    DECLARE @MAHD INT
+    SELECT @MAHD = ISNULL(MAX(MAHD), 0) + 1 FROM HOADON
+    DECLARE @NGAYLAP DATE = CAST(GETDATE() AS DATE)
+    DECLARE @TONGTIEN DECIMAL(18,2) = 1
+
+    INSERT INTO HOADON
+        (MAHD, MATK, MACN, NGAYLAP, TONGTIEN)
+    VALUES
+        (@MAHD, @MATK, @MACN, @NGAYLAP, @TONGTIEN)
+END
+GO
+
+CREATE TRIGGER trg_UpdateInvoiceTotal_CTHDSANPHAM
+ON CTHDSANPHAM
+AFTER INSERT, UPDATE, DELETE
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    ;WITH ChangedHD AS (
+        SELECT MAHD FROM inserted
+        UNION
+        SELECT MAHD FROM deleted
+    )
+    UPDATE hd
+    SET TONGTIEN =
+        ISNULL((
+            SELECT SUM(DONGIAHIENTAI * SOLUONG)
+            FROM CTHDSANPHAM sp
+            WHERE sp.MAHD = hd.MAHD
+        ), 0)
+        +
+        ISNULL((
+            SELECT SUM(DONGIAHIENTAI)
+            FROM CTHDDV dv
+            WHERE dv.MAHD = hd.MAHD
+        ), 0)
+    FROM HOADON hd
+    JOIN ChangedHD c ON hd.MAHD = c.MAHD
+END
+GO
+
+CREATE TRIGGER trg_UpdateInvoiceTotal_CTHDDV
+ON CTHDDV
+AFTER INSERT, UPDATE, DELETE
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    ;WITH ChangedHD AS (
+        SELECT MAHD FROM inserted
+        UNION
+        SELECT MAHD FROM deleted
+    )
+    UPDATE hd
+    SET TONGTIEN =
+        ISNULL((
+            SELECT SUM(DONGIAHIENTAI * SOLUONG)
+            FROM CTHDSANPHAM sp
+            WHERE sp.MAHD = hd.MAHD
+        ), 0)
+        +
+        ISNULL((
+            SELECT SUM(DONGIAHIENTAI)
+            FROM CTHDDV dv
+            WHERE dv.MAHD = hd.MAHD
+        ), 0)
+    FROM HOADON hd
+    JOIN ChangedHD c ON hd.MAHD = c.MAHD
+END
+GO
+
+----- Kiểm tra kịch bản 9
+EXEC sp_CreateInvoice 
+    @MATK = 1,
+    @MACN = 1;
+GO
+
+SELECT * FROM HOADON WHERE MAHD = 500001;
+GO
+
+-- Thêm chi tiết hóa đơn sản phẩm
+INSERT INTO CTHDSANPHAM (MAHD, MASP, SOLUONG, DONGIAHIENTAI)
+VALUES
+(500001, 1, 2, 50000),   -- 100.000
+(500001, 2, 1, 30000);   -- 30.000
+GO
+
+-- Mong muốn sau chạy trigger: TONGTIEN = 130.000
+SELECT MAHD, TONGTIEN
+FROM HOADON
+WHERE MAHD = 500001;
+
+-- Thêm chi tiết hóa đơn dịch vụ
+INSERT INTO CTHDDV (MAHD, MADV, MATC, DONGIAHIENTAI)
+VALUES
+(500001, 1, 20000, 20000),   -- 20.000
+(500001, 2, 30000, 30000);   -- 30.000
+GO
+
+-- Mong muốn sau chạy trigger: TONGTIEN = 180.000
+SELECT MAHD, TONGTIEN
+FROM HOADON
+WHERE MAHD = 500001;
+
+-- Test update
+UPDATE CTHDSANPHAM
+SET SOLUONG = 3
+WHERE MAHD = 500001 AND MASP = 1;
+GO
+
+-- Mong muốn sau chạy trigger: TONGTIEN = 230.000
+SELECT MAHD, TONGTIEN
+FROM HOADON
+WHERE MAHD = 500001;
+
+-- Test delete
+DELETE FROM CTHDDV
+WHERE MAHD = 500001 AND MADV = 1;
+GO
+
+-- Mong muốn sau chạy trigger: TONGTIEN = 210.000
+SELECT MAHD, TONGTIEN
+FROM HOADON
+WHERE MAHD = 500001;
+GO
