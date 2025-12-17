@@ -4,7 +4,8 @@ from services.hoadon_service import (
     get_all_sanpham,
     get_sanpham_by_chinhanh,
     get_all_dichvu,
-    get_dichvu_by_chinhanh
+    get_dichvu_by_chinhanh,
+    get_nhanvien_by_chucvu
 )
 
 st.set_page_config(layout="wide")
@@ -15,7 +16,7 @@ st.title("🧾 Hóa đơn & Thanh toán toàn diện")
 # =========================
 st.subheader("Thông tin hóa đơn")
 
-col1, col2 = st.columns(2)
+col1, col2, col3 = st.columns(3)
 
 with col1:
     matk = st.number_input("Mã tài khoản (MATK)", min_value=1, step=1)
@@ -23,11 +24,15 @@ with col1:
 with col2:
     macn = st.number_input("Mã chi nhánh (MACN)", min_value=1, step=1)
 
+with col3:   
+    makm = st.number_input("Mã khuyến mãi (MAKM) - 0 nếu không áp dụng", min_value=0, step=1)
+    
 st.divider()
 
 # Lấy danh sách sản phẩm và dịch vụ
 all_sanpham = []
 all_dichvu = []
+all_nhanvien = []
 
 # Kiểm tra nếu chi nhánh thay đổi, reset lại session state
 if "last_macn" not in st.session_state:
@@ -37,13 +42,26 @@ if st.session_state.last_macn != macn:
     st.session_state.last_macn = macn
     st.session_state.sanpham = []
     st.session_state.dichvu = []
+    st.session_state.nhanvien = []
 
 if macn >= 1:
     try:
         all_sanpham = get_sanpham_by_chinhanh(macn)
         all_dichvu = get_dichvu_by_chinhanh(macn)
+        all_nhanvien = get_nhanvien_by_chucvu(macn, "Nhân viên tiếp tân")
     except Exception as e:
         st.error(f"Lỗi khi tải dữ liệu: {e}")
+
+st.subheader("Nhân viên lập hóa đơn")
+nvlap = st.selectbox(
+    label="Nhân viên lập", 
+    options=[nv['MANV'] for nv in all_nhanvien], 
+    format_func=lambda x: next((f"{nv['MANV']} - {nv['HOTEN']}" for nv in all_nhanvien if nv['MANV'] == x), "")             
+    )
+
+st.subheader("Hình thức thanh toán")
+hinhthucthanhtoan = st.selectbox(label="Hình thức thanh toán",options=("Tiền mặt", "Chuyển khoản"), placeholder="Chọn phương thức thanh toán")
+
 
 # =========================
 # 2. Sản phẩm
@@ -55,7 +73,7 @@ if "sanpham" not in st.session_state:
 
 if all_sanpham:
     for i in range(len(st.session_state.sanpham)):
-        c1, c2, c3 = st.columns([3, 1, 2])
+        c1, c2, c3, c4 = st.columns([3, 1, 2, 0.8])
         with c1:
             selected_sp = st.selectbox(
                 f"Chọn sản phẩm #{i+1}",
@@ -87,6 +105,11 @@ if all_sanpham:
                 step=1
             )
 
+        with c4:
+            if st.button("🗑", key=f"rm_sp_{i}"):
+                del st.session_state.sanpham[i]
+                st.rerun()
+
 if all_sanpham:
     if st.button("➕ Thêm sản phẩm"):
         st.session_state.sanpham.append({
@@ -110,7 +133,7 @@ if "dichvu" not in st.session_state:
 
 if all_dichvu:
     for i in range(len(st.session_state.dichvu)):
-        c1, c2, c3 = st.columns([3, 1, 2])
+        c1, c2, c3, c4 = st.columns([3, 1, 2, 0.8])
         with c1:
             selected_dv = st.selectbox(
                 f"Chọn dịch vụ #{i+1}",
@@ -141,6 +164,11 @@ if all_dichvu:
                 key=f"dgdv_{i}",
                 step=1
             )
+
+        with c4:
+            if st.button("🗑", key=f"rm_dv_{i}"):
+                del st.session_state.dichvu[i]
+                st.rerun()
 
 if all_dichvu:
     if st.button("➕ Thêm dịch vụ"):
@@ -177,14 +205,19 @@ if st.button("💾 Tạo hóa đơn", type="primary"):
             st.warning("⚠️ Vui lòng nhập ít nhất một sản phẩm hoặc dịch vụ")
             st.stop()
 
+        makm_value = int(makm) if makm > 0 else None
+
         # =========================
         # DATA ĐỒNG BỘ SERVICE
         # =========================
         data = {
             "matk": int(matk),
             "macn": int(macn),
+            "makm": makm_value,
+            "nvlap": int(nvlap),
             "sanpham": ds_sanpham,
-            "dichvu": ds_dichvu
+            "dichvu": ds_dichvu,
+            "hinhthucthanhtoan": hinhthucthanhtoan
         }
 
         tao_hoa_don_toan_dien(data)

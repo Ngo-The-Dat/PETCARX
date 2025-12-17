@@ -11,10 +11,16 @@ def tao_hoa_don_toan_dien(data: dict):
         cursor.execute("""
             EXEC sp_CreateInvoice
                 @MATK = ?,
-                @MACN = ?
+                @MAKM = ?,
+                @HINHTHUCTHANHTOAN = ?,
+                @MACN = ?,
+                @NVLAP = ?
         """, (
             int(data["matk"]),
-            int(data["macn"])
+            data.get("makm"),
+            data["hinhthucthanhtoan"],
+            int(data["macn"]),
+            int(data["nvlap"])
         ))
 
         # Lấy MAHD vừa tạo
@@ -36,7 +42,7 @@ def tao_hoa_don_toan_dien(data: dict):
                     mahd,
                     int(sp[0]),  # MASP
                     int(sp[1]),  # SOLUONG
-                    float(sp[2]) # DONGIAHIENTAI
+                    int(sp[2]) # DONGIAHIENTAI
                 ))
 
         # -----------------------------
@@ -54,7 +60,7 @@ def tao_hoa_don_toan_dien(data: dict):
                     mahd,
                     int(dv[0]),  # MADV
                     int(dv[1]),  # MATC
-                    float(dv[2]) # DONGIAHIENTAI
+                    int(dv[2]) # DONGIAHIENTAI
                 ))
 
         conn.commit()
@@ -166,6 +172,31 @@ def get_dichvu_by_chinhanh(macn: int):
         for row in cursor.fetchall():
             results.append(dict(zip(columns, row)))
         
+        return results
+    
+    except Exception as e:
+        raise e
+    finally:
+        cursor.close()
+        conn.close()
+        
+def get_nhanvien_by_chucvu(macn: int, chucvu: str):
+    # Lấy danh sách nhân viên thuộc 1 chức vụ nào đó
+    conn = get_connection()
+    cursor = conn.cursor()
+    
+    try:
+        cursor.execute("""
+        SELECT MANV, HOTEN
+        FROM NHANSU
+        WHERE MACN = ?
+        AND CHUCVU = ?""", (int(macn), chucvu))
+    
+        columns = [column[0] for column in cursor.description]
+        results = []
+        for row in cursor.fetchall():
+            results.append(dict(zip(columns, row)))
+    
         return results
     
     except Exception as e:
