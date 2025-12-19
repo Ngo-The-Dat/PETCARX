@@ -601,6 +601,12 @@ BEGIN
 END
 GO
 
-SELECT *
-FROM NHANSU
-WHERE CHUCVU = N'Bác sĩ thú y'
+---- lấy danh sách bác sĩ----
+CREATE PROCEDURE sp_GetDoctors
+AS
+BEGIN
+    SELECT *
+    FROM NHANSU
+    WHERE CHUCVU = N'Bác sĩ thú y'
+END
+GO

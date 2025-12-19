@@ -10,4 +10,4 @@ if st.button("Tra cứu thuốc"):
     st.switch_page("pages/search_product.py")
 
 if st.button("Tạo bệnh án mới"):
-    st.switch_page("pages/create_pet_medical_record.py.py")
+    st.switch_page("pages/doctor_create_pet_medical_record.py")
