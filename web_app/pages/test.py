@@ -1,12 +1,12 @@
 import streamlit as st
-from services.report_service import get_total_revenue_all_branches
+from services.schedule_service import get_doctor_schedule
 
 
-# ten = st.text_input("Họ tên")
+ten = st.text_input("Họ tên")
 # macn = st.number_input("MACN")
 
 # if ten:
-df = get_total_revenue_all_branches()
+df = get_doctor_schedule(ten)
 df = df.loc[:,~df.columns.duplicated()]
 
 if df.empty:
