@@ -73,16 +73,15 @@ def tao_hoa_don_toan_dien(data: dict):
         conn.close()
 
 
-def get_all_sanpham():
-    """Lấy danh sách tất cả sản phẩm"""
+def get_all_chi_nhanh():
+    """Lấy danh sách tất cả chi nhánh"""
     conn = get_connection()
     cursor = conn.cursor()
     
     try:
         cursor.execute("""
-            SELECT MASP, TEN, GIABAN, LOAI
-            FROM SANPHAM
-            ORDER BY TEN
+            SELECT MACN, TEN
+            FROM CHINHANH
         """)
         
         columns = [column[0] for column in cursor.description]
@@ -126,33 +125,6 @@ def get_sanpham_by_chinhanh(macn: int):
         cursor.close()
         conn.close()
 
-
-def get_all_dichvu():
-    """Lấy danh sách tất cả dịch vụ"""
-    conn = get_connection()
-    cursor = conn.cursor()
-    
-    try:
-        cursor.execute("""
-            SELECT MADV, TENDV, GIANIEMYET
-            FROM DICHVU
-            ORDER BY TENDV
-        """)
-        
-        columns = [column[0] for column in cursor.description]
-        results = []
-        for row in cursor.fetchall():
-            results.append(dict(zip(columns, row)))
-        
-        return results
-    
-    except Exception as e:
-        raise e
-    finally:
-        cursor.close()
-        conn.close()
-
-
 def get_dichvu_by_chinhanh(macn: int):
     """Lấy danh sách dịch vụ có tại chi nhánh"""
     conn = get_connection()
@@ -180,7 +152,7 @@ def get_dichvu_by_chinhanh(macn: int):
         cursor.close()
         conn.close()
         
-def get_nhanvien_by_chucvu(macn: int, chucvu: str):
+def get_nhanvien_by_chucvu(macn: int, chucvu: str = "Nhân viên tiếp tân"):
     # Lấy danh sách nhân viên thuộc 1 chức vụ nào đó
     conn = get_connection()
     cursor = conn.cursor()

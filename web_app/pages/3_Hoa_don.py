@@ -1,9 +1,8 @@
 import streamlit as st
 from services.hoadon_service import (
+    get_all_chi_nhanh,
     tao_hoa_don_toan_dien,
-    get_all_sanpham,
     get_sanpham_by_chinhanh,
-    get_all_dichvu,
     get_dichvu_by_chinhanh,
     get_nhanvien_by_chucvu
 )
@@ -22,7 +21,12 @@ with col1:
     matk = st.number_input("Mã tài khoản (MATK)", min_value=1, step=1)
 
 with col2:
-    macn = st.number_input("Mã chi nhánh (MACN)", min_value=1, step=1)
+    all_chinhanh = get_all_chi_nhanh()
+    macn = st.selectbox(
+        label="Mã chi nhánh (MACN)", 
+        options=[cn['MACN'] for cn in all_chinhanh], 
+        format_func=lambda x: f"{x} - {next((cn['TEN'] for cn in all_chinhanh if cn['MACN'] == x), '')}" if x is not None else ""
+    )
 
 with col3:   
     makm = st.number_input("Mã khuyến mãi (MAKM) - 0 nếu không áp dụng", min_value=0, step=1)
