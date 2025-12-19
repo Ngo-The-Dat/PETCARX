@@ -16,4 +16,4 @@ if st.button("Tạo bệnh án mới"):
     st.switch_page("pages/search_product.py")
 
 if st.button("Kê toa thuốc"):
-    st.switch_page("pages/search_product.py")
+    st.switch_page("pages/doctor_search_pills.py")

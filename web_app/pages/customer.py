@@ -5,7 +5,7 @@ st.title("Customer")
 st.write("Chọn chức năng:")
 
 if st.button("Tìm kiếm sản phẩm"):
-    st.switch_page("pages/search_product.py")
+    st.switch_page("pages/customer_search_product.py")
 
 if st.button("Tra cứu lịch bác sĩ"):
     st.switch_page("pages/customer_search_doctor_schedule.py")
