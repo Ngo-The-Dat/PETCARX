@@ -193,27 +193,32 @@ BEGIN
     ----------------------------------------------------------------
     -- 2. INSERT HỒ SƠ KHÁM
     ----------------------------------------------------------------
-    INSERT INTO HOSOKHAMBENH (MAKB, MATC, MABACSI, NGAYHENTAIKHAM)
-    VALUES (@MAKB, @MATC, @MABACSI, @NGAYTAIKHAM);
+    INSERT INTO HOSOKHAMBENH
+        (MAKB, MATC, MABACSI, NGAYHENTAIKHAM)
+    VALUES
+        (@MAKB, @MATC, @MABACSI, @NGAYTAIKHAM);
 
     ----------------------------------------------------------------
     -- 3. TRIỆU CHỨNG
     ----------------------------------------------------------------
-    INSERT INTO HOSOTRIEUCHUNG (MAKB, TRIEUCHUNG)
+    INSERT INTO HOSOTRIEUCHUNG
+        (MAKB, TRIEUCHUNG)
     SELECT @MAKB, TRIEUCHUNG
     FROM #DS_TRIEUCHUNG;
 
     ----------------------------------------------------------------
     -- 4. CHẨN ĐOÁN
     ----------------------------------------------------------------
-    INSERT INTO HOSOCHUANDOAN (MAKB, CHUANDOAN)
+    INSERT INTO HOSOCHUANDOAN
+        (MAKB, CHUANDOAN)
     SELECT @MAKB, CHUANDOAN
     FROM #DS_CHUANDOAN;
 
     ----------------------------------------------------------------
     -- 5. TOA THUỐC (TRIGGER TỰ TRỪ KHO)
     ----------------------------------------------------------------
-    INSERT INTO CHITIETTOATHUOC (MAKB, MASP, SOLUONG)
+    INSERT INTO CHITIETTOATHUOC
+        (MAKB, MASP, SOLUONG)
     SELECT @MAKB, MASP, SOLUONG
     FROM #DS_THUOC;
 
@@ -323,12 +328,13 @@ GO
 
 
 ----8. Danh sách tài khoản hội viên cấp độ----
-CREATE PROC TAIKHOANHOIVIEN_CAPBAC @MACAPBAC INT
+CREATE PROC TAIKHOANHOIVIEN_CAPBAC
+    @MACAPBAC INT
 AS
 BEGIN
     SELECT *
     FROM TAIKHOANHOIVIEN TK
-    JOIN CAPBACTHANHVIEN CB ON TK.MACAPBAC = CB.MACAPBAC
+        JOIN CAPBACTHANHVIEN CB ON TK.MACAPBAC = CB.MACAPBAC
     WHERE CB.MACAPBAC = @MACAPBAC
 END
 GO
@@ -348,7 +354,9 @@ BEGIN
     DECLARE @NGAYLAP DATE = CAST(GETDATE() AS DATE)
     DECLARE @TONGTIEN INT = 0
 
-    IF NOT EXISTS(SELECT 1 FROM NHANSU WHERE @NVLAP = MANV AND CHUCVU = N'Nhân viên tiếp tân')
+    IF NOT EXISTS(SELECT 1
+    FROM NHANSU
+    WHERE @NVLAP = MANV AND CHUCVU = N'Nhân viên tiếp tân')
         THROW 50001, N'Nhân viên không phải là tiếp tân', 1
 
     INSERT INTO HOADON
@@ -370,8 +378,10 @@ BEGIN
     --FROM SANPHAM
     --WHERE MASP = @MASP
 
-    INSERT INTO CTHDSANPHAM (MAHD, MASP, DONGIAHIENTAI, SOLUONG, THANHTIEN)
-    VALUES (@MAHD, @MASP, @DONGIAHIENTAI, @SOLUONG, @DONGIAHIENTAI * @SOLUONG)
+    INSERT INTO CTHDSANPHAM
+        (MAHD, MASP, DONGIAHIENTAI, SOLUONG, THANHTIEN)
+    VALUES
+        (@MAHD, @MASP, @DONGIAHIENTAI, @SOLUONG, @DONGIAHIENTAI * @SOLUONG)
 END
 GO
 --CREATE PROCEDURE sp_CreateDetailInvoice_Service
@@ -390,28 +400,34 @@ AS
 BEGIN
     SET NOCOUNT ON;
 
-    ;WITH ChangedHD AS (
-        SELECT MAHD FROM inserted
-        UNION
-        SELECT MAHD FROM deleted
-    )
+    ;
+    WITH
+        ChangedHD
+        AS
+        (
+                            SELECT MAHD
+                FROM inserted
+            UNION
+                SELECT MAHD
+                FROM deleted
+        )
     UPDATE hd
     SET TONGTIEN =
         ISNULL((
             SELECT SUM(DONGIAHIENTAI * SOLUONG)
-            FROM CTHDSANPHAM sp
-            WHERE sp.MAHD = hd.MAHD
+    FROM CTHDSANPHAM sp
+    WHERE sp.MAHD = hd.MAHD
         ), 0)
         +
         ISNULL((
             SELECT SUM(DONGIAHIENTAI)
-            FROM CTHDDV dv
-            WHERE dv.MAHD = hd.MAHD
+    FROM CTHDDV dv
+    WHERE dv.MAHD = hd.MAHD
         ), 0)
         - ISNULL(KM.SOTIENGIAM, 0)
     FROM HOADON hd
-    JOIN ChangedHD c ON hd.MAHD = c.MAHD
-    LEFT JOIN KHUYENMAI KM ON HD.MAKM = KM.MAKM
+        JOIN ChangedHD c ON hd.MAHD = c.MAHD
+        LEFT JOIN KHUYENMAI KM ON HD.MAKM = KM.MAKM
 END
 GO
 
@@ -422,28 +438,97 @@ AS
 BEGIN
     SET NOCOUNT ON;
 
-    ;WITH ChangedHD AS (
-        SELECT MAHD FROM inserted
-        UNION
-        SELECT MAHD FROM deleted
-    )
+    ;
+    WITH
+        ChangedHD
+        AS
+        (
+                            SELECT MAHD
+                FROM inserted
+            UNION
+                SELECT MAHD
+                FROM deleted
+        )
     UPDATE hd
     SET TONGTIEN =
         ISNULL((
             SELECT SUM(DONGIAHIENTAI * SOLUONG)
-            FROM CTHDSANPHAM sp
-            WHERE sp.MAHD = hd.MAHD
+    FROM CTHDSANPHAM sp
+    WHERE sp.MAHD = hd.MAHD
         ), 0)
         +
         ISNULL((
             SELECT SUM(DONGIAHIENTAI)
-            FROM CTHDDV dv
-            WHERE dv.MAHD = hd.MAHD
+    FROM CTHDDV dv
+    WHERE dv.MAHD = hd.MAHD
         ), 0)
         - ISNULL(KM.SOTIENGIAM, 0)
     FROM HOADON hd
-    JOIN ChangedHD c ON hd.MAHD = c.MAHD
-    LEFT JOIN KHUYENMAI KM ON HD.MAKM = KM.MAKM
+        JOIN ChangedHD c ON hd.MAHD = c.MAHD
+        LEFT JOIN KHUYENMAI KM ON HD.MAKM = KM.MAKM
+END
+GO
+
+CREATE PROCEDURE search_product_name
+    @TEN NVARCHAR(50)
+AS
+BEGIN
+    select *
+    from SANPHAM
+    where TEN = @TEN
+END
+GO
+
+CREATE PROCEDURE get_revenue_by_doctor
+    @HOTEN NVARCHAR(50)
+AS
+BEGIN
+    SELECT NS.HOTEN, SUM(CAST(DOANHTHU AS BIGINT)) AS TONG_DOANH_THU
+    FROM DOANHTHUCHINHANH DT
+    JOIN CHINHANH CN ON DT.MACN = CN.MACN
+    JOIN NHANSU NS ON NS.MACN = CN.MACN AND CHUCVU = N'Bác sĩ thú y' AND NS.HOTEN = @HOTEN
+    GROUP BY NS.HOTEN
+END
+GO
+
+CREATE PROCEDURE get_visit_count_by_branch
+    @MACN INT
+AS
+BEGIN
+    SELECT CN.MACN, COUNT(*) AS SOLUOTKHAM
+    FROM CHINHANH CN
+    JOIN NHANSU NS ON CN.MACN = NS.MACN AND CHUCVU = N'Bác sĩ thú y'
+    JOIN HOSOKHAMBENH HS ON HS.MABACSI = NS.MANV
+    WHERE CN.MACN = @MACN
+    GROUP BY CN.MACN
+END
+GO
+CREATE PROCEDURE get_product_sales_revenue
+    @TEN NVARCHAR(50)
+AS
+BEGIN
+    SELECT SP.TEN, SUM(CAST(DOANHTHU AS BIGINT)) AS TONG_DOANH_THU
+    FROM SANPHAM SP
+    JOIN SANPHAM_CHINHANH SPCN ON SP.MASP = SPCN.MASP
+    JOIN DOANHTHUCHINHANH DT ON DT.MACN = SPCN.MACN
+    WHERE TEN = @TEN
+    GROUP BY SP.TEN
+END
+GO
+CREATE PROCEDURE get_total_revenue_all_branches
+AS
+BEGIN
+    SELECT SUM(CAST(DOANHTHU AS bigint)) AS TONG_DOANH_THU
+    FROM DOANHTHUCHINHANH
+END
+GO
+CREATE PROCEDURE get_doctor_schedule @HOTEN NVARCHAR(50)
+AS
+BEGIN
+    SELECT DISTINCT(HS.NGAYHENTAIKHAM)
+    FROM NHANSU NS
+    JOIN HOSOKHAMBENH HS ON NS.MANV = HS.MABACSI AND CHUCVU = N'Bác sĩ thú y' AND NS.HOTEN = @HOTEN
+    ORDER BY NGAYHENTAIKHAM DESC
 END
 GO
 

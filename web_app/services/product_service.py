@@ -7,9 +7,7 @@ def search_product_name(ten: str):
         cursor = conn.cursor()
         cursor.execute(
             """
-                select *
-                from SANPHAM
-                where TEN = ?
+                EXEC search_product_name ?
             """,
             (ten),
         )

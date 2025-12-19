@@ -1,14 +1,17 @@
 import streamlit as st
+from services.schedule_service import get_doctor_schedule
 
-def form_callback():
-    st.write(st.session_state.my_slider)
-    st.write(st.session_state.my_checkbox)
-# for key in st.session_state.keys():
-#     del st.session_state[key]
 
-with st.form(key='my_form'):
-    slider_input = st.slider('My slider', 0, 10, 5, key='my_slider')
-    checkbox_input = st.checkbox('Yes or No', key='my_checkbox')
-    submit_button = st.form_submit_button(label='Submit', on_click=form_callback)
+ten = st.text_input("Họ tên")
+# macn = st.number_input("MACN")
 
-st.session_state
+# if ten:
+df = get_doctor_schedule(ten)
+df = df.loc[:,~df.columns.duplicated()]
+
+if df.empty:
+    st.info("Không có dữ liệu cho mã thú cưng này.")
+else:
+    st.dataframe(df, hide_index=True)
+# else:
+st.info("Nhập thông tin.")
