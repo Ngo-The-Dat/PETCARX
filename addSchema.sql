@@ -469,13 +469,13 @@ BEGIN
 END
 GO
 
-CREATE PROCEDURE search_product_name
+CREATE OR ALTER PROCEDURE search_product_name
     @TEN NVARCHAR(50)
 AS
 BEGIN
     select *
     from SANPHAM
-    where TEN = @TEN
+    where TEN LIKE '%' + @TEN + '%'
 END
 GO
 
@@ -559,12 +559,13 @@ BEGIN
 END
 GO
 
-CREATE PROC sp_TraCuuThuCung
+CREATE OR ALTER PROC sp_TraCuuThuCung
     @MATC INT
 AS
 BEGIN
-    SELECT *
-    FROM THUCUNG
+    SELECT TC.*, TK.HOTEN
+    FROM THUCUNG AS TC
+    LEFT JOIN TAIKHOANHOIVIEN AS TK ON TC.MATK = TK.MATK
     WHERE MATC = @MATC
 END
 GO

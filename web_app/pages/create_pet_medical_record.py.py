@@ -2,7 +2,7 @@ import streamlit as st
 from services.khambenh_service import kham_benh_toan_dien
 
 st.set_page_config(layout="wide")
-st.title("🩺 Khám bệnh & Kê đơn toàn diện")
+st.title("Tạo hô sơ khám bệnh mới")
 
 # =========================
 # 1. Thông tin hồ sơ khám

@@ -18,5 +18,3 @@ def search_product_name(ten: str):
 
         columns = [col[0] for col in cursor.description]
         return pd.DataFrame.from_records(rows, columns=columns)
-
-

@@ -14,4 +14,4 @@ if st.button("Xem lịch sử mua hàng"):
     st.switch_page("pages/customer_product_medical_history.py")
 
 if st.button("Xem lịch sử khám của thú cưng"):
-    st.switch_page("pages/pet_medical_history.py")
+    st.switch_page("pages/customer_pet_medical_history.py")
