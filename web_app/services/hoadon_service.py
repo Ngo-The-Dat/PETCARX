@@ -50,17 +50,18 @@ def tao_hoa_don_toan_dien(data: dict):
         # -----------------------------
         if data["dichvu"]:
             for dv in data["dichvu"]:
+                # dv expected as tuple: (MATC or None, LOAI (nvarchar), MASP (int))
                 cursor.execute("""
                     EXEC sp_CreateDetailInvoice_Service
                         @MAHD = ?,
-                        @MADV = ?,
                         @MATC = ?,
-                        @DONGIAHIENTAI = ?
+                        @LOAI = ?,
+                        @MASP = ?
                 """, (
                     mahd,
-                    int(dv[0]),  # MADV
-                    int(dv[1]),  # MATC
-                    int(dv[2]) # DONGIAHIENTAI
+                    dv[0],           # MATC (can be None)
+                    dv[1],           # LOAI (nvarchar): 'Khám' | 'Tiêm lẻ' | 'Tiêm gói'
+                    int(dv[2])      # MASP (int): MADV or MAVX or MAGT depending on LOAI
                 ))
 
         conn.commit()
@@ -132,7 +133,7 @@ def get_dichvu_by_chinhanh(macn: int):
     
     try:
         cursor.execute("""
-            SELECT dv.MADV, dv.TENDV, dv.GIANIEMYET
+            SELECT dv.MADV, dv.TENDV, dv.GIANIEMYET, dv.LOAIDV
             FROM DICHVU dv
             INNER JOIN DICHVU_CHINHANH dvcn ON dv.MADV = dvcn.MADV
             WHERE dvcn.MACN = ?
@@ -176,3 +177,56 @@ def get_nhanvien_by_chucvu(macn: int, chucvu: str = "Nhân viên tiếp tân"):
     finally:
         cursor.close()
         conn.close()
+        
+def get_goi_tiem_by_chinhanh(macn: int):
+    """Lấy danh sách gói tiêm có tại chi nhánh"""
+    conn = get_connection()
+    cursor = conn.cursor()
+    
+    try:
+        cursor.execute("""
+            SELECT gt.MAGT, gt.TENGOITIEM
+            FROM GOITIEM gt
+            INNER JOIN GOITIEM_CHINHANH gtcn ON gt.MAGT = gtcn.MAGT
+            WHERE gtcn.MACN = ?
+            ORDER BY gt.TENGOITIEM
+        """, (int(macn),))
+        
+        columns = [column[0] for column in cursor.description]
+        results = []
+        for row in cursor.fetchall():
+            results.append(dict(zip(columns, row)))
+        
+        return results
+    
+    except Exception as e:
+        raise e
+    finally:
+        cursor.close()
+        conn.close()
+        
+def get_thu_cung_by_khachhang(matk: int):
+    """Lấy danh sách thú cưng của khách hàng"""
+    conn = get_connection()
+    cursor = conn.cursor()
+    
+    try:
+        cursor.execute("""
+            SELECT MATC, TEN
+            FROM THUCUNG
+            WHERE MATK = ?
+            ORDER BY TEN
+        """, (int(matk),))
+        
+        columns = [column[0] for column in cursor.description]
+        results = []
+        for row in cursor.fetchall():
+            results.append(dict(zip(columns, row)))
+        
+        return results
+    
+    except Exception as e:
+        raise e
+    finally:
+        cursor.close()
+        conn.close()    

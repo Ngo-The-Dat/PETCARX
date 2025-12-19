@@ -9,3 +9,13 @@ left join CHITIETTOATHUOC as ct on h.MAKB = ct.MAKB
 where h.MAKB = 150001;
 
 select * from SANPHAM WHERE MASP = 38;
+
+select tongtien from HOADON WHERE MAHD = 500003;
+
+select CTHDDV.DONGIAHIENTAI from CTHDDV
+WHERE MAHD = 500003 AND MATC = 19464;
+
+ SELECT MATC, TEN
+            FROM THUCUNG
+            WHERE MATK = 842
+            ORDER BY TEN
