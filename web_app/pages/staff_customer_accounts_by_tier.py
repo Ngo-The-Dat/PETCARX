@@ -1,4 +1,4 @@
-from services.taikhoan_capbac_service import danhsach_taikhoan_capbac
+from web_app.services.capbac_service import danhsach_taikhoan_capbac
 import streamlit as st
 
 st.header("Danh sách tài khoản thuộc mã cấp độ")

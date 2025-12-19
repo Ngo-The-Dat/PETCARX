@@ -1,8 +1,10 @@
 import streamlit as st
 from services.khambenh_service import kham_benh_toan_dien
+from services.staff_manage_service import get_doctors
+
 
 st.set_page_config(layout="wide")
-st.title("🩺 Khám bệnh & Kê đơn toàn diện")
+st.title("Tạo hô sơ khám bệnh mới")
 
 # =========================
 # 1. Thông tin hồ sơ khám
@@ -15,7 +17,25 @@ with col1:
     matc = st.number_input("Mã thú cưng (MATC)", min_value=1, step=1)
 
 with col2:
-    mabacsi = st.number_input("Mã bác sĩ (MABACSI)", min_value=1, step=1)
+    df_doctors = get_doctors()
+
+    if df_doctors.empty:
+        st.warning("Không có bác sĩ nào trong hệ thống.")
+        mabacsi = None
+    else:
+        # Tạo mapping: tên hiển thị -> mã bác sĩ
+        doctor_map = {
+            f"{row['MANV']} - {row['HOTEN']}": row['MANV']
+            for _, row in df_doctors.iterrows()
+        }
+
+        selected_doctor = st.selectbox(
+            "Chọn bác sĩ",
+            options=list(doctor_map.keys())
+        )
+
+        mabacsi = doctor_map[selected_doctor]
+
 
 with col3:
     ngay_tai_kham = st.date_input("Ngày hẹn tái khám")

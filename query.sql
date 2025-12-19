@@ -6,7 +6,7 @@ select * from HOSOKHAMBENH as h
 left join HOSOTRIEUCHUNG as t on h.MAKB = t.MAKB
 left join HOSOCHUANDOAN as c on h.MAKB = c.MAKB
 left join CHITIETTOATHUOC as ct on h.MAKB = ct.MAKB
-where h.MAKB = 150001;
+where h.MAKB = 150002;
 
 select * from SANPHAM WHERE MASP = 38;
 
