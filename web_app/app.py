@@ -19,14 +19,14 @@ col1, col2 = st.columns(2)
 
 with col1:
     if st.button("👤 Customer"):
-        st.switch_page("pages/customer_home.py")
+        st.switch_page("pages/customer.py")
 
     if st.button("🧑‍⚕️ Doctor"):
-        st.switch_page("pages/doctor_home.py")
+        st.switch_page("pages/doctor.py")
 
 with col2:
     if st.button("🧑‍💼 Manager"):
-        st.switch_page("pages/manager_home.py")
+        st.switch_page("pages/manager.py")
 
     if st.button("🛒 Sales"):
-        st.switch_page("pages/sales_home.py")
+        st.switch_page("pages/sales.py")
