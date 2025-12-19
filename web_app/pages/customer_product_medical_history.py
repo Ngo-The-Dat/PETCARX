@@ -1,5 +1,5 @@
 import streamlit as st
-from services.khachhang_service import tim_kiem_khach_hang
+from services.customer_service import tim_kiem_khach_hang
 from services.order_service import get_lich_su_mua_hang
 
 st.header("🛒 Lịch sử mua hàng của khách hàng")

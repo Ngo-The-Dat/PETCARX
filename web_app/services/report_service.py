@@ -31,15 +31,15 @@ def get_all_branches():
             return []
         return rows
 
-# thống kê doanh thu theo chi nhánh
-def get_revenue_by_branch(nam: int):
+# thống kê doanh thu theo năm của mỗi chi nhánh
+def get_revenue_by_year(nam: int):
     with get_connection() as connect:
         cursor = connect.cursor()
         cursor.execute(
             """
             EXEC sp_BaoCaoDoanhThu ?
             """,
-            (nam)
+            (nam,)
         )
         
         rows = cursor.fetchall()
@@ -108,3 +108,23 @@ def get_total_revenue_all_branches():
         
         columns = [col[0] for col in cursor.description]
         return pd.DataFrame.from_records(columns=columns, data=rows)
+    
+def get_revenue_by_branch(macn: int, nam: int):
+    with get_connection() as connect:
+        cursor = connect.cursor()
+        cursor.execute(
+            """
+            EXEC get_revenue_by_branch ?, ?
+            """,
+            (macn, nam)
+        )
+        
+        rows = cursor.fetchall()
+        if not rows:
+            return pd.DataFrame()
+        
+        columns = [col[0] for col in cursor.description]
+        return pd.DataFrame.from_records(data=rows, columns=columns)
+    
+    
+    
