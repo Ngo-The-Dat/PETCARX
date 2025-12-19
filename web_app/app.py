@@ -28,5 +28,5 @@ with col2:
     if st.button("🧑‍💼 Manager"):
         st.switch_page("pages/manager.py")
 
-    if st.button("🛒 Sales"):
-        st.switch_page("pages/sales.py")
+    if st.button("🛒 Staff"):
+        st.switch_page("pages/staff.py")

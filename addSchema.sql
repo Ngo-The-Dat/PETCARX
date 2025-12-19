@@ -469,13 +469,13 @@ BEGIN
 END
 GO
 
-CREATE PROCEDURE search_product_name
+CREATE OR ALTER PROCEDURE search_product_name
     @TEN NVARCHAR(50)
 AS
 BEGIN
     select *
     from SANPHAM
-    where TEN = @TEN
+    where TEN LIKE '%' + @TEN + '%'
 END
 GO
 
@@ -560,13 +560,55 @@ BEGIN
 END
 GO
 
-CREATE PROC sp_TraCuuThuCung
+CREATE OR ALTER PROC sp_TraCuuThuCung
     @MATC INT
 AS
 BEGIN
-    SELECT *
-    FROM THUCUNG
+    SELECT TC.*, TK.HOTEN
+    FROM THUCUNG AS TC
+    LEFT JOIN TAIKHOANHOIVIEN AS TK ON TC.MATK = TK.MATK
     WHERE MATC = @MATC
+END
+GO
+
+----Xem lịch sử mua hàng của khách hàng----
+CREATE PROCEDURE sp_LichSuMuaHang
+    @MATK INT
+AS
+BEGIN
+    SELECT 
+        hd.MAHD,
+        hd.NGAYLAP,
+        hd.TONGTIEN,
+        hd.HINHTHUCTHANHTOAN,
+        cn.TEN AS TENCHINHANH,
+        cn.DIACHI AS DIACHICHINHANH,
+        sp.TEN AS TENSANPHAM,
+        ctsp.SOLUONG AS SOLUONGSP,
+        ctsp.DONGIAHIENTAI AS DONGIASP,
+        ctsp.THANHTIEN,
+        dv.TENDV AS TENDICHVU,
+        ctdv.DONGIAHIENTAI AS DONGIADV,
+        tc.TEN AS TENTHUCUNG
+    FROM HOADON hd
+    LEFT JOIN CHINHANH cn ON hd.MACN = cn.MACN
+    LEFT JOIN CTHDSANPHAM ctsp ON hd.MAHD = ctsp.MAHD
+    LEFT JOIN SANPHAM sp ON ctsp.MASP = sp.MASP
+    LEFT JOIN CTHDDV ctdv ON hd.MAHD = ctdv.MAHD
+    LEFT JOIN DICHVU dv ON ctdv.MADV = dv.MADV
+    LEFT JOIN THUCUNG tc ON ctdv.MATC = tc.MATC
+    WHERE hd.MATK = @MATK
+    ORDER BY hd.NGAYLAP DESC, hd.MAHD DESC
+END
+GO
+
+---- lấy danh sách bác sĩ----
+CREATE PROCEDURE sp_GetDoctors
+AS
+BEGIN
+    SELECT *
+    FROM NHANSU
+    WHERE CHUCVU = N'Bác sĩ thú y'
 END
 GO
 
