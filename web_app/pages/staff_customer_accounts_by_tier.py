@@ -15,3 +15,6 @@ if macapbac:
         st.dataframe(df)
 else:
     st.info("Nhập mã cấp độ để xem báo cáo.")
+
+if st.button("Quay lại"):
+    st.switch_page("pages/staff.py")

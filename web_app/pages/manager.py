@@ -21,3 +21,6 @@ if st.button("Thống kê doanh thu toàn bộ chi nhánh"):
     
 if st.button("Thông kê doanh thu theo 1 chi nhánh"):
     st.switch_page("pages/manager_revenue_by_branch.py")
+
+if st.button("Quay lại"):
+    st.switch_page("app.py")

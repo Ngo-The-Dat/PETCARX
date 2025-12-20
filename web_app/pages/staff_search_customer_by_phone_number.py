@@ -72,3 +72,6 @@ with st.expander("ℹ️ Hướng dẫn sử dụng"):
     - Thông tin tài khoản: Mã tài khoản, Cấp bậc thành viên
     - Thông tin giao dịch: Điểm Loyalty, Tổng số tiền đã chi tiêu
     """)
+
+if st.button("Quay lại"):
+    st.switch_page("pages/staff.py")

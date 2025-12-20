@@ -14,3 +14,6 @@ if st.button("Tra cứu thuốc"):
 
 if st.button("Tạo bệnh án mới"):
     st.switch_page("pages/doctor_create_pet_medical_record.py")
+
+if st.button("Quay lại"):
+    st.switch_page("app.py")

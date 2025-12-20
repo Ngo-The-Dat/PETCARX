@@ -38,3 +38,6 @@ if st.button("🔍 Tra cứu"):
             st.write("**Giới tính:**", pet_info.get("GIOITINH", ""))
             st.write("**Tình trạng sức khoẻ:**", pet_info.get("TINHTRANGSUCKHOE", ""))
             st.write("**Khách hàng sở hữu:**", pet_info.get("HOTEN", ""))
+
+if st.button("Quay lại"):
+    st.switch_page("pages/staff.py")

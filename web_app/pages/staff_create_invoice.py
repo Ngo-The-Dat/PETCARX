@@ -323,3 +323,5 @@ if st.button("💾 Tạo hóa đơn", type="primary"):
         st.exception(e)
         st.exception(e)
  
+if st.button("Quay lại"):
+    st.switch_page("pages/staff.py")

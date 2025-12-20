@@ -15,3 +15,6 @@ if st.button("Danh sách tài khoản khách hàng thuộc cấp bậc"):
     
 if st.button("Tạo hóa đơn cho khách hàng"):
     st.switch_page("pages/staff_create_invoice.py")
+
+if st.button("Quay lại"):
+    st.switch_page("app.py")

@@ -29,3 +29,6 @@ if st.button("Tra cứu lịch sử khám"):
         st.dataframe(df_history, use_container_width=True)
 
         makb_list = df_history["MAKB"].tolist()
+
+if st.button("Quay lại"):
+    st.switch_page("pages/customer.py")
