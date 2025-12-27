@@ -75,3 +75,6 @@ if st.session_state.selected_makb:
             df_detail[["MASP", "SOLUONG"]].dropna(),
             use_container_width=True
         )
+
+if st.button("Quay lại"):
+    st.switch_page("pages/doctor.py")

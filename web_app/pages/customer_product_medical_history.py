@@ -122,3 +122,6 @@ with st.expander("ℹ️ Hướng dẫn sử dụng"):
     - Dịch vụ: Tên dịch vụ, đơn giá, thú cưng sử dụng
     - Thống kê: Tổng số đơn, tổng giá trị, giá trị trung bình
     """)
+
+if st.button("Quay lại"):
+    st.switch_page("pages/customer.py")

@@ -15,3 +15,6 @@ if st.button("Xem lịch sử mua hàng"):
 
 if st.button("Xem lịch sử khám của thú cưng"):
     st.switch_page("pages/customer_pet_medical_history.py")
+
+if st.button("Quay lại"):
+    st.switch_page("app.py")

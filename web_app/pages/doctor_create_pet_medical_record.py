@@ -154,3 +154,6 @@ if st.button("💾 Lưu hồ sơ khám", type="primary"):
     except Exception as e:
         st.error("❌ Lỗi khi lưu hồ sơ khám")
         st.exception(e)
+
+if st.button("Quay lại"):
+    st.switch_page("pages/doctor.py")

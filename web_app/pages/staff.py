@@ -8,10 +8,13 @@ if st.button("Tra cứu thú cưng"):
     st.switch_page("pages/staff_search_pet.py")
     
 if st.button("Tra cứu khách hàng theo số điện thoại"):
-    st.switch_page("page/staff_search_customer_by_phone_number.py")
+    st.switch_page("pages/staff_search_customer_by_phone_number.py")
     
 if st.button("Danh sách tài khoản khách hàng thuộc cấp bậc"):
-    st.switch_page("page/staff_customer_accounts_by_tier.py")
+    st.switch_page("pages/staff_customer_accounts_by_tier.py")
     
 if st.button("Tạo hóa đơn cho khách hàng"):
-    st.switch_page("page/staff_create_invoice")
+    st.switch_page("pages/staff_create_invoice.py")
+
+if st.button("Quay lại"):
+    st.switch_page("app.py")
