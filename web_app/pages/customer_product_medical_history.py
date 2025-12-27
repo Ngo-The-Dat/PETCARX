@@ -1,26 +1,31 @@
 import streamlit as st
-from services.customer_service import tim_kiem_khach_hang
+from services.customer_service import tim_kiem_khach_hang, get_all_customers
 from services.order_service import get_lich_su_mua_hang
 
 st.header("🛒 Lịch sử mua hàng của khách hàng")
 
-# Input số điện thoại để tìm khách hàng
-sdt = st.text_input(
-    "Số điện thoại khách hàng", 
-    placeholder="Nhập 10 số",
-    max_chars=10,
-    help="Nhập số điện thoại để tìm khách hàng"
-)
+# Lấy danh sách khách hàng
+customers = get_all_customers()
+
+if not customers:
+    st.warning("Không có dữ liệu khách hàng trong hệ thống.")
+else:
+    # Tạo options: hiển thị SDT - Họ tên
+    customer_options = {f"{c[0]}": c[0] for c in customers}
+    
+    selected_customer = st.selectbox(
+        "Chọn số điện thoại khách hàng:",
+        options=[""] + list(customer_options.keys()),
+        index=0,
+        placeholder="Chọn hoặc nhập để tìm..."
+    )
 
 # Nút tìm kiếm
 if st.button("🔍 Tìm kiếm", type="primary"):
-    if not sdt:
-        st.warning("⚠️ Vui lòng nhập số điện thoại")
-    elif len(sdt) != 10:
-        st.warning("⚠️ Số điện thoại phải có 10 chữ số")
-    elif not sdt.isdigit():
-        st.warning("⚠️ Số điện thoại chỉ được chứa chữ số")
+    if not selected_customer:
+        st.warning("⚠️ Vui lòng chọn khách hàng")
     else:
+        sdt = customer_options[selected_customer]
         # Tìm kiếm khách hàng
         df_kh = tim_kiem_khach_hang(sdt)
         
