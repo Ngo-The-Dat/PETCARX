@@ -48,4 +48,15 @@ def tim_kiem_khach_hang(sdt: str) -> pd.DataFrame:
         return pd.DataFrame.from_records(rows, columns=columns)
 
 
+def tao_tai_khoan_moi_cho_kh(hoten: str, sdt: str, email: str, cccd: str, gioitinh: str, ngaysinh):
+    """Gọi TAO_TAIKHOANMOI_CHO_KH để tạo tài khoản hội viên mới."""
+    with get_connection() as conn:
+        cursor = conn.cursor()
+        cursor.execute(
+            "EXEC TAO_TAIKHOANMOI_CHO_KH ?, ?, ?, ?, ?, ?",
+            (hoten, sdt, email, cccd, gioitinh, ngaysinh),
+        )
+        conn.commit()
+
+
 

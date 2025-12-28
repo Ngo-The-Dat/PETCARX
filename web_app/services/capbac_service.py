@@ -6,7 +6,7 @@ def danhsach_taikhoan_capbac(macapbac):
         cursor = conn.cursor()
         cursor.execute(
             "EXEC TAIKHOANHOIVIEN_CAPBAC ?",
-            (macapbac)
+            (macapbac,)
         )
         rows = cursor.fetchall()
         if not rows:
