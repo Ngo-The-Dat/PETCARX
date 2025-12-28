@@ -12,13 +12,13 @@ BEGIN
     -- 1. Kiểm tra tồn kho cho TẤT CẢ dòng insert
     IF EXISTS (
         SELECT 1
-        FROM inserted i
+    FROM inserted i
         JOIN HOSOKHAMBENH kb ON i.MAKB = kb.MAKB
         JOIN NHANSU ns ON kb.MABACSI = ns.MANV
         JOIN SANPHAM_CHINHANH spcn
-            ON i.MASP = spcn.MASP
-           AND ns.MACN = spcn.MACN
-        WHERE spcn.SOLUONGTONKHO < i.SOLUONG
+        ON i.MASP = spcn.MASP
+            AND ns.MACN = spcn.MACN
+    WHERE spcn.SOLUONGTONKHO < i.SOLUONG
     )
     BEGIN
         RAISERROR (N'Không đủ tồn kho thuốc', 16, 1);
@@ -30,9 +30,9 @@ BEGIN
     UPDATE spcn
     SET spcn.SOLUONGTONKHO = spcn.SOLUONGTONKHO - i.SOLUONG
     FROM SANPHAM_CHINHANH spcn
-    JOIN inserted i ON spcn.MASP = i.MASP
-    JOIN HOSOKHAMBENH kb ON i.MAKB = kb.MAKB
-    JOIN NHANSU ns ON kb.MABACSI = ns.MANV
+        JOIN inserted i ON spcn.MASP = i.MASP
+        JOIN HOSOKHAMBENH kb ON i.MAKB = kb.MAKB
+        JOIN NHANSU ns ON kb.MABACSI = ns.MANV
     WHERE spcn.MACN = ns.MACN;
 END
 GO
@@ -62,7 +62,8 @@ BEGIN
 
     COMMIT;
 
-    SELECT @MAKB AS MAKB; -- trả về cho Python
+    SELECT @MAKB AS MAKB;
+-- trả về cho Python
 END
 GO
 
@@ -72,8 +73,10 @@ CREATE PROCEDURE sp_AddSymptom
     @TRIEUCHUNG NVARCHAR(50)
 AS
 BEGIN
-    INSERT INTO HOSOTRIEUCHUNG (MAKB, TRIEUCHUNG)
-    VALUES (@MAKB, @TRIEUCHUNG);
+    INSERT INTO HOSOTRIEUCHUNG
+        (MAKB, TRIEUCHUNG)
+    VALUES
+        (@MAKB, @TRIEUCHUNG);
 END
 GO
 
@@ -83,8 +86,10 @@ CREATE PROCEDURE sp_AddDiagnosis
     @CHUANDOAN NVARCHAR(50)
 AS
 BEGIN
-    INSERT INTO HOSOCHUANDOAN (MAKB, CHUANDOAN)
-    VALUES (@MAKB, @CHUANDOAN);
+    INSERT INTO HOSOCHUANDOAN
+        (MAKB, CHUANDOAN)
+    VALUES
+        (@MAKB, @CHUANDOAN);
 END
 GO
 ---- Thêm chi tiết toa thuốc cho hồ sơ khám bệnh----
@@ -94,8 +99,10 @@ CREATE PROCEDURE sp_AddPrescription
     @SOLUONG INT
 AS
 BEGIN
-    INSERT INTO CHITIETTOATHUOC (MAKB, MASP, SOLUONG)
-    VALUES (@MAKB, @MASP, @SOLUONG);
+    INSERT INTO CHITIETTOATHUOC
+        (MAKB, MASP, SOLUONG)
+    VALUES
+        (@MAKB, @MASP, @SOLUONG);
 END
 GO
 
@@ -231,28 +238,78 @@ BEGIN
 END
 GO
 
-CREATE PROCEDURE sp_CreateDetailInvoice_Product
+USE PETCARX
+GO
+
+CREATE OR ALTER PROCEDURE sp_CreateDetailInvoice_Product
     @MAHD INT,
     @MASP INT,
     @SOLUONG INT,
     @DONGIAHIENTAI INT
 AS
 BEGIN
-    DECLARE @GIABAN INT
-    SELECT @GIABAN = GIABAN
-    FROM SANPHAM
-    WHERE MASP = @MASP
+    SET NOCOUNT ON;
+    SET XACT_ABORT ON;
+    -- Tự động Rollback nếu có lỗi, khỏi cần Try-Catch rườm rà
 
-    INSERT INTO CTHDSANPHAM (MAHD, MASP, DONGIAHIENTAI, SOLUONG, THANHTIEN)
-    VALUES (@MAHD, @MASP, @DONGIAHIENTAI, @SOLUONG, @DONGIAHIENTAI * @SOLUONG)
+    BEGIN TRANSACTION;
+
+    -- BƯỚC 1: LẤY MÃ CHI NHÁNH TỪ HÓA ĐƠN
+    -- Phải biết hóa đơn này thuộc chi nhánh nào mới trừ kho đúng chỗ được
+    DECLARE @MACN INT;
+    SELECT @MACN = MACN
+    FROM HOADON
+    WHERE MAHD = @MAHD;
+
+    IF @MACN IS NULL
+    BEGIN
+        ROLLBACK TRANSACTION;
+        THROW 50001, N'Hóa đơn không tồn tại.', 1;
+    END
+
+    -- BƯỚC 2: KIỂM TRA TỒN KHO & KHÓA DỮ LIỆU (QUAN TRỌNG)
+    -- Sử dụng UPDLOCK để chặn các giao dịch khác định sửa dòng này cùng lúc
+    DECLARE @TONKHO INT;
+
+    SELECT @TONKHO = SOLUONGTONKHO
+    FROM SANPHAM_CHINHANH WITH (UPDLOCK, ROWLOCK)
+    -- Khóa dòng này lại ngay lập tức
+    WHERE MASP = @MASP AND MACN = @MACN;
+
+    IF @TONKHO IS NULL
+    BEGIN
+        ROLLBACK TRANSACTION;
+        THROW 50002, N'Sản phẩm không tồn tại ở chi nhánh này.', 1;
+    END
+
+    IF @TONKHO < @SOLUONG
+    BEGIN
+        ROLLBACK TRANSACTION;
+        RAISERROR (N'Lỗi: Không đủ hàng tồn kho (Tồn: %d, Mua: %d)', 16, 1, @TONKHO, @SOLUONG);
+        RETURN;
+    END
+
+    -- BƯỚC 3: TRỪ TỒN KHO
+    UPDATE SANPHAM_CHINHANH
+    SET SOLUONGTONKHO = SOLUONGTONKHO - @SOLUONG
+    WHERE MASP = @MASP AND MACN = @MACN;
+
+    -- BƯỚC 4: THÊM VÀO CHI TIẾT HÓA ĐƠN
+    -- Kiểm tra xem sản phẩm đã có trong hóa đơn chưa để cộng dồn hoặc thêm mới (Optional logic, ở đây tôi insert mới theo flow của bạn)
+    INSERT INTO CTHDSANPHAM
+        (MAHD, MASP, DONGIAHIENTAI, SOLUONG, THANHTIEN)
+    VALUES
+        (@MAHD, @MASP, @DONGIAHIENTAI, @SOLUONG, @DONGIAHIENTAI * @SOLUONG);
+
+    COMMIT TRANSACTION;
 END
 GO
 
 CREATE PROCEDURE sp_CreateDetailInvoice_Service
-   @MAHD INT,
-   @MATC INT,
-   @LOAI NVARCHAR(10),
-   @MASP INT
+    @MAHD INT,
+    @MATC INT,
+    @LOAI NVARCHAR(10),
+    @MASP INT
 AS
 BEGIN
     DECLARE @DONGIAHIENTAI INT
@@ -262,8 +319,10 @@ BEGIN
         FROM DICHVU
         WHERE MADV = @MASP
 
-        INSERT INTO CTHDDV (MAHD, MATC, MADV, DONGIAHIENTAI)
-        VALUES (@MAHD, @MATC, @MASP, @DONGIAHIENTAI)
+        INSERT INTO CTHDDV
+            (MAHD, MATC, MADV, DONGIAHIENTAI)
+        VALUES
+            (@MAHD, @MATC, @MASP, @DONGIAHIENTAI)
     END
     ELSE 
     BEGIN
@@ -272,8 +331,8 @@ BEGIN
         BEGIN
             SELECT @DONGIAHIENTAI = ISNULL(SUM(CT.SOLUONG * SP.GIABAN), 0) * (1 - GT.PHANTRAMGIAM)
             FROM CHITIETGOITIEM CT
-            JOIN SANPHAM SP ON CT.MASP = SP.MASP
-            JOIN GOITIEM GT ON CT.MAGT = GT.MAGT
+                JOIN SANPHAM SP ON CT.MASP = SP.MASP
+                JOIN GOITIEM GT ON CT.MAGT = GT.MAGT
             WHERE CT.MAGT = @MASP
             GROUP BY GT.PHANTRAMGIAM
 
@@ -281,8 +340,10 @@ BEGIN
             FROM DICHVU
             WHERE LOAIDV = N'Tiêm gói'
 
-            INSERT INTO CTHDDV (MAHD, MATC, MADV, DONGIAHIENTAI, MADK)
-            VALUES (@MAHD, @MATC, @MADV, @DONGIAHIENTAI, @MASP)
+            INSERT INTO CTHDDV
+                (MAHD, MATC, MADV, DONGIAHIENTAI, MADK)
+            VALUES
+                (@MAHD, @MATC, @MADV, @DONGIAHIENTAI, @MASP)
         END
 
         ELSE IF N'Tiêm lẻ' = @LOAI
@@ -295,11 +356,13 @@ BEGIN
             FROM DICHVU
             WHERE LOAIDV = N'Tiêm lẻ'
 
-            INSERT INTO CTHDDV (MAHD, MATC, MADV, DONGIAHIENTAI, MATIEMLE)
-            VALUES (@MAHD, @MATC, @MADV, @DONGIAHIENTAI, @MASP)
+            INSERT INTO CTHDDV
+                (MAHD, MATC, MADV, DONGIAHIENTAI, MATIEMLE)
+            VALUES
+                (@MAHD, @MATC, @MADV, @DONGIAHIENTAI, @MASP)
         END
     END
-    
+
 END
 GO
 
@@ -439,7 +502,7 @@ AS
 BEGIN
     SELECT DISTINCT(HS.NGAYHENTAIKHAM)
     FROM NHANSU NS
-    JOIN HOSOKHAMBENH HS ON NS.MANV = HS.MABACSI
+        JOIN HOSOKHAMBENH HS ON NS.MANV = HS.MABACSI
     WHERE CHUCVU = N'Bác sĩ thú y' AND NS.HOTEN = @HOTEN
     ORDER BY NGAYHENTAIKHAM DESC
 END
