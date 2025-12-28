@@ -241,7 +241,7 @@ GO
 USE PETCARX
 GO
 
-CREATE OR ALTER PROCEDURE sp_CreateDetailInvoice_Product
+CREATE PROCEDURE sp_CreateDetailInvoice_Product
     @MAHD INT,
     @MASP INT,
     @SOLUONG INT,
