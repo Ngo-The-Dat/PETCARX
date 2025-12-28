@@ -274,28 +274,7 @@ CREATE TABLE CTHDDV
 )
 
 
---Kịch bản mới Quy trình Khám bệnh & Kê đơn Toàn diện 
--- Triệu chứng (n dòng)
-CREATE TYPE TVP_TrieuChung AS TABLE
-(
-    TRIEUCHUNG NVARCHAR(50)
-)
-GO
-
--- Chẩn đoán (n dòng)
-CREATE TYPE TVP_ChuanDoan AS TABLE
-(
-    CHUANDOAN NVARCHAR(50)
-)
-GO
-
--- Thuốc (n dòng)
-CREATE TYPE TVP_Thuoc AS TABLE
-(
-    MASP INT,
-    SOLUONG INT
-)
-GO
+---------------------------------------------TẠO PARTITION-------------------------------------------
 -- Tạo partion dựa trên thuộc tính ngày của DOANHTHUCHINHANH
 -- Khoảng X <= 2019-12-31, 2019-12-31 < X <= 2021-12-31, X > 2021-12-31 
 ALTER DATABASE PETCARX
@@ -402,7 +381,7 @@ GO
 CREATE CLUSTERED INDEX INDEX_HOADON_NGAYLAP
 ON HOADON(NGAYLAP) ON DOANHTHU_BY_YEAR_SCHEME(NGAYLAP)
 GO
-
+---------------------------------------------TẠO INDEX-------------------------------------------
 ---- Tạo Index tìm kiếm nhanh Khách hàng theo SĐT ---- 
 CREATE NONCLUSTERED INDEX idx_KhachHang_SDT
 ON TAIKHOANHOIVIEN(SDT)
