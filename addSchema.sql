@@ -2,43 +2,44 @@ USE PETCARX
 GO
 
 ----1. Trừ tồn kho khi thêm chi tiết toa thuốc----
-CREATE TRIGGER trg_TruKhoThuoc
+CREATE OR ALTER TRIGGER trg_TruKhoThuoc
 ON CHITIETTOATHUOC
 AFTER INSERT
 AS
 BEGIN
-    SET NOCOUNT ON
+    SET NOCOUNT ON;
 
-    DECLARE @MASP INT, @SOLUONG INT, @MACN INT, @TON INT
-
-    SELECT TOP 1
-        @MASP = i.MASP,
-        @SOLUONG = i.SOLUONG,
-        @MACN = ns.MACN
-    FROM inserted i
+    -- 1. Kiểm tra tồn kho cho TẤT CẢ dòng insert
+    IF EXISTS (
+        SELECT 1
+        FROM inserted i
         JOIN HOSOKHAMBENH kb ON i.MAKB = kb.MAKB
         JOIN NHANSU ns ON kb.MABACSI = ns.MANV
-
-    -- Khóa tồn kho
-    SELECT @TON = SOLUONGTONKHO
-    FROM SANPHAM_CHINHANH WITH (UPDLOCK, HOLDLOCK)
-    WHERE MASP = @MASP AND MACN = @MACN
-
-    IF @TON < @SOLUONG
+        JOIN SANPHAM_CHINHANH spcn
+            ON i.MASP = spcn.MASP
+           AND ns.MACN = spcn.MACN
+        WHERE spcn.SOLUONGTONKHO < i.SOLUONG
+    )
     BEGIN
-        RAISERROR (N'Không đủ tồn kho thuốc', 16, 1)
-        ROLLBACK TRANSACTION
-        RETURN
+        RAISERROR (N'Không đủ tồn kho thuốc', 16, 1);
+        ROLLBACK TRANSACTION;
+        RETURN;
     END
 
-    UPDATE SANPHAM_CHINHANH
-    SET SOLUONGTONKHO = SOLUONGTONKHO - @SOLUONG
-    WHERE MASP = @MASP AND MACN = @MACN
+    -- 2. Trừ kho SET-BASED
+    UPDATE spcn
+    SET spcn.SOLUONGTONKHO = spcn.SOLUONGTONKHO - i.SOLUONG
+    FROM SANPHAM_CHINHANH spcn
+    JOIN inserted i ON spcn.MASP = i.MASP
+    JOIN HOSOKHAMBENH kb ON i.MAKB = kb.MAKB
+    JOIN NHANSU ns ON kb.MABACSI = ns.MANV
+    WHERE spcn.MACN = ns.MACN;
 END
 GO
 
+
 ----2. Thêm hồ sơ khám bệnh----
-CREATE PROCEDURE sp_KhamBenh_ToanDien
+CREATE PROCEDURE sp_CreateMedicalRecord
     @MATC INT,
     @MABACSI INT,
     @NGAYTAIKHAM DATE
@@ -51,47 +52,53 @@ BEGIN
 
     BEGIN TRAN;
 
-    ----------------------------------------------------------------
-    -- 1. SINH MAKB = MAX + 1 (CÓ KHÓA)
-    ----------------------------------------------------------------
     SELECT @MAKB = ISNULL(MAX(MAKB), 0) + 1
     FROM HOSOKHAMBENH WITH (UPDLOCK, HOLDLOCK);
 
-    ----------------------------------------------------------------
-    -- 2. INSERT HỒ SƠ KHÁM
-    ----------------------------------------------------------------
     INSERT INTO HOSOKHAMBENH
         (MAKB, MATC, MABACSI, NGAYHENTAIKHAM)
     VALUES
         (@MAKB, @MATC, @MABACSI, @NGAYTAIKHAM);
 
-    ----------------------------------------------------------------
-    -- 3. TRIỆU CHỨNG
-    ----------------------------------------------------------------
-    INSERT INTO HOSOTRIEUCHUNG
-        (MAKB, TRIEUCHUNG)
-    SELECT @MAKB, TRIEUCHUNG
-    FROM #DS_TRIEUCHUNG;
-
-    ----------------------------------------------------------------
-    -- 4. CHẨN ĐOÁN
-    ----------------------------------------------------------------
-    INSERT INTO HOSOCHUANDOAN
-        (MAKB, CHUANDOAN)
-    SELECT @MAKB, CHUANDOAN
-    FROM #DS_CHUANDOAN;
-
-    ----------------------------------------------------------------
-    -- 5. TOA THUỐC (TRIGGER TỰ TRỪ KHO)
-    ----------------------------------------------------------------
-    INSERT INTO CHITIETTOATHUOC
-        (MAKB, MASP, SOLUONG)
-    SELECT @MAKB, MASP, SOLUONG
-    FROM #DS_THUOC;
-
     COMMIT;
+
+    SELECT @MAKB AS MAKB; -- trả về cho Python
 END
 GO
+
+---- Thêm triệu chứng cho hồ sơ khám bệnh----
+CREATE PROCEDURE sp_AddSymptom
+    @MAKB INT,
+    @TRIEUCHUNG NVARCHAR(50)
+AS
+BEGIN
+    INSERT INTO HOSOTRIEUCHUNG (MAKB, TRIEUCHUNG)
+    VALUES (@MAKB, @TRIEUCHUNG);
+END
+GO
+
+---- Thêm chẩn đoán cho hồ sơ khám bệnh----
+CREATE PROCEDURE sp_AddDiagnosis
+    @MAKB INT,
+    @CHUANDOAN NVARCHAR(50)
+AS
+BEGIN
+    INSERT INTO HOSOCHUANDOAN (MAKB, CHUANDOAN)
+    VALUES (@MAKB, @CHUANDOAN);
+END
+GO
+---- Thêm chi tiết toa thuốc cho hồ sơ khám bệnh----
+CREATE PROCEDURE sp_AddPrescription
+    @MAKB INT,
+    @MASP INT,
+    @SOLUONG INT
+AS
+BEGIN
+    INSERT INTO CHITIETTOATHUOC (MAKB, MASP, SOLUONG)
+    VALUES (@MAKB, @MASP, @SOLUONG);
+END
+GO
+
 
 ----3. Tra cứu lịch sử khám bệnh và tiêm phòng của thú cưng----
 CREATE PROCEDURE sp_LichSuThuCung

@@ -25,17 +25,17 @@ if st.button("Tra cứu lịch sử khám"):
         st.warning("Không tìm thấy lịch sử khám cho thú cưng này.")
     else:
         st.subheader("📅 Các lần khám trước đó")
-
         st.dataframe(df_history, use_container_width=True)
 
         makb_list = df_history["MAKB"].tolist()
 
-        st.session_state.selected_makb = st.selectbox(
+        st.selectbox(
             "Chọn lần khám để xem chi tiết",
-            makb_list
+            makb_list,
+            key="selected_makb"
         )
 
-if st.session_state.selected_makb:
+if st.session_state.selected_makb is not None:
     st.divider()
     st.subheader("🩺 Chi tiết bệnh án")
 
@@ -47,7 +47,6 @@ if st.session_state.selected_makb:
     if df_detail.empty:
         st.info("Không có chi tiết cho lần khám này.")
     else:
-        # Thông tin chung
         st.markdown("### 📌 Thông tin lần khám")
         info_cols = ["MAKB", "MABACSI", "NGAYHENTAIKHAM"]
         st.dataframe(
@@ -55,24 +54,21 @@ if st.session_state.selected_makb:
             use_container_width=True
         )
 
-        # Triệu chứng
         st.markdown("### 🤒 Triệu chứng")
         st.dataframe(
             df_detail[["TRIEUCHUNG"]].dropna().drop_duplicates(),
             use_container_width=True
         )
 
-        # Chuẩn đoán
         st.markdown("### 🧠 Chuẩn đoán")
         st.dataframe(
             df_detail[["CHUANDOAN"]].dropna().drop_duplicates(),
             use_container_width=True
         )
 
-        # Toa thuốc
         st.markdown("### 💊 Toa thuốc")
         st.dataframe(
-            df_detail[["MASP", "SOLUONG"]].dropna(),
+            df_detail[["MASP", "SOLUONG"]].dropna().drop_duplicates(),
             use_container_width=True
         )
 
